@@ -2,7 +2,7 @@
     "id": "MoarChallengesPlease",
     "name": "Moar Challenges Please",
     "author": ["plaxerx"],
-    "description": "30 challenges continuing the vanilla list, numbers 21 through 50.",
+    "description": "30 more vanilla-friendly challenges. GHLF!",
     "prefix": "mcp",
     "main_file": "main.lua",
     "version": "0.1.0",
