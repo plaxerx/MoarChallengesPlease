@@ -18,7 +18,7 @@ Thirty new challenges for [Balatro](https://www.playbalatro.com/).
 | 30 | **No Common Sense** | Common Jokers cannot appear |
 | 31 | **Everything For a Price** | All Jokers are Perishable |
 | 32 | **Joker Draft** | Jokers are automatically sold for full value after each Boss Blind |
-| 33 | **Legendary Run, but..** | Start with all five Eternal Legendaries and 0 Joker slots — and Chicot is destroyed at Ante 8 |
+| 33 | **Legendary Run, but..** | Start with all five Eternal Legendaries, but... |
 | 34 | **Half a Hand** | Only 3 cards may be selected at a time. Start with a Negative Eternal Half Joker |
 | 35 | **Slow Hands** | Hand size 13, but only 2 hands and 1 discard |
 | 36 | **Poker Purist** | Each hand must beat the last poker hand played, resetting every round |
@@ -33,7 +33,7 @@ Thirty new challenges for [Balatro](https://www.playbalatro.com/).
 | 45 | **Stargazer** | No Tarot cards, packs or tags |
 | 46 | **The Recovered** | Three of every face card and nothing else. Hand size is 5 |
 | 47 | **The Tenant** | All Jokers are Rental, but income from blinds and hands is doubled |
-| 48 | **The Gambler** | The first 10 rerolls are free, then +$1 each — and every reroll may destroy a Joker |
+| 48 | **The Gambler** | The first 10 rerolls are free, then +$1 each. Every reroll may destroy a Joker |
 | 49 | **The Long Game** | Must defeat Ante 16 to win |
 | 50 | **The Trial** | Every blind after Ante 1 is a Boss Blind. Start with Luchador |
 
