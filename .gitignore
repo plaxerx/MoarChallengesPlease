@@ -1,0 +1,6 @@
+# Local tooling / assistant config - not part of the mod
+.claude/
+CLAUDE.md
+
+# Assistant handoff notes - local only, not part of the mod
+HANDOFF.md

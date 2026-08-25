@@ -1,0 +1,20 @@
+{
+    "id": "MoarChallengesPlease",
+    "name": "Moar Challenges Please",
+    "author": ["plaxerx"],
+    "description": "30 challenges continuing the vanilla list, numbers 21 through 50.",
+    "prefix": "mcp",
+    "main_file": "main.lua",
+    "version": "0.1.0",
+    "priority": 5,
+    "badge_colour": "3A7BED",
+    "badge_text_colour": "FFFFFF",
+    "display_name": "Moar Challenges Please",
+    "dependencies": [
+        "Steamodded (>=1.0.0~BETA-0400)"
+    ],
+    "conflicts": [
+        "MoarVanillaPlease"
+    ],
+    "provides": []
+}
