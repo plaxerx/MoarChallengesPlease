@@ -36,6 +36,9 @@ return {
             ch_c_mcp_ancient_tech   = { "No {C:planet}Planet{} cards, packs or tags" },
             ch_c_mcp_stargazer      = { "No {C:tarot}Tarot{} cards, packs or tags" },
             ch_c_mcp_recovered      = { "Start with only {C:attention}face cards{}. Hand size is {C:attention}5{}" },
+            ch_c_mcp_baby           = { "{C:attention}Jokers{} only add {C:chips}Chips{}, {C:mult}Mult{} and {C:money}money{}" },
+            ch_c_mcp_baby_jokers    = { "No {C:attention}XMult{}, retriggers, copying or destruction" },
+            ch_c_mcp_baby_bosses    = { "Boss Blinds have no ability. Blinds cannot be skipped" },
         },
     },
 }

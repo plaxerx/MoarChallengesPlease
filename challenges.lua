@@ -393,6 +393,14 @@ function Game:start_run(args)
         if G.GAME.starting_params then G.GAME.starting_params.play_limit = 3 end
     end
     if m('mcp_long_game') then G.GAME.win_ante = 16 end
+    if m('mcp_baby') then
+        G.GAME.banned_keys = G.GAME.banned_keys or {}
+        for _, pool in ipairs({ 'Enhanced', 'Edition', 'Seal' }) do
+            for _, v in ipairs(G.P_CENTER_POOLS[pool] or {}) do
+                if v.key and not BABY_SAFE[v.key] then G.GAME.banned_keys[v.key] = true end
+            end
+        end
+    end
 end
 
 local mcp_ease_ante = ease_ante
@@ -467,6 +475,72 @@ function reset_blinds()
                 rr.blind_choices[slot] = get_new_boss()
             end
         end
+    end
+end
+
+--============================================================
+-- Baby's First Balatro rules (51)
+--============================================================
+-- The Wall and Violet Vessel are the only vanilla bosses with no ability at all,
+-- so every Boss round is one of those two and differs only in score requirement.
+
+local BABY_BOSS, BABY_FINAL = 'bl_wall', 'bl_final_vessel'
+
+local function baby_boss_mult(ante)
+    if ante >= 8 then return 6 end   -- Very Large Blind
+    if ante == 7 then return 4 end   -- Extra Large Blind
+    return 2                         -- same size as a normal Boss
+end
+
+local mcp_get_new_boss = get_new_boss
+function get_new_boss()
+    if not m('mcp_baby') then return mcp_get_new_boss() end
+    local rr = G.GAME.round_resets
+    local ante = MCP.plain(rr and rr.ante) or 1
+    local win = MCP.plain(G.GAME.win_ante) or 8
+    local key = (ante >= 2 and ante % win == 0) and BABY_FINAL or BABY_BOSS
+    G.GAME.bosses_used[key] = (G.GAME.bosses_used[key] or 0) + 1
+    return key
+end
+
+local mcp_set_blind_baby = Blind.set_blind
+function Blind:set_blind(blind, reset, silent)
+    mcp_set_blind_baby(self, blind, reset, silent)
+    if reset or not (m('mcp_baby') and blind and blind.boss) then return end
+    local rr = G.GAME.round_resets
+    local ante = MCP.plain(rr and rr.ante) or 1
+    self.mult = baby_boss_mult(ante)
+    self.chips = get_blind_amount(rr.ante) * self.mult * G.GAME.starting_params.ante_scaling
+end
+
+local mcp_skip_blind = G.FUNCS.skip_blind
+G.FUNCS.skip_blind = function(e)
+    if m('mcp_baby') then return end
+    return mcp_skip_blind(e)
+end
+
+-- Editions, seals and stickers are polled rather than drawn from a pool, so
+-- banned_keys does not reach them.
+local mcp_poll_edition = poll_edition
+function poll_edition(...)
+    local ed = mcp_poll_edition(...)
+    if m('mcp_baby') and type(ed) == 'table' and (ed.polychrome or ed.negative) then return nil end
+    return ed
+end
+
+if SMODS.poll_seal then
+    local mcp_poll_seal = SMODS.poll_seal
+    function SMODS.poll_seal(...)
+        if m('mcp_baby') then return nil end
+        return mcp_poll_seal(...)
+    end
+end
+
+if SMODS.Sticker and SMODS.Sticker.should_apply then
+    local mcp_should_apply = SMODS.Sticker.should_apply
+    function SMODS.Sticker:should_apply(card, center, area, rate)
+        if m('mcp_baby') then return false end
+        return mcp_should_apply(self, card, center, area, rate)
     end
 end
 
@@ -593,6 +667,70 @@ local ban_tarot_packs = pool_ids('Booster', function(v)
 end)
 
 local ban_commons   = pool_ids('Joker', function(v) return v.rarity == 1 or v.rarity == 'Common' end)
+
+--============================================================
+-- Baby's First Balatro whitelists (51)
+--============================================================
+-- Whitelists, so anything unlisted - including every modded object - is banned.
+
+local function pool_whitelist(pool_key, allowed)
+    return pool_ids(pool_key, function(v) return not allowed[v.key] end)
+end
+
+local BABY_JOKERS = {}
+for _, k in ipairs({
+    -- flat Chips or Mult on a poker hand, which is the point of the challenge
+    'j_joker', 'j_jolly', 'j_zany', 'j_mad', 'j_crazy', 'j_droll',
+    'j_sly', 'j_wily', 'j_clever', 'j_devious', 'j_crafty', 'j_half',
+    -- flat Chips or Mult per scored suit or face card
+    'j_greedy_joker', 'j_lusty_joker', 'j_wrathful_joker', 'j_gluttenous_joker',
+    'j_scary_face', 'j_smiley', 'j_arrowhead', 'j_onyx_agate',
+    -- Chips or Mult read off something visible on the board
+    'j_banner', 'j_mystic_summit', 'j_abstract', 'j_blue_joker', 'j_bull',
+    'j_bootstraps', 'j_swashbuckler',
+    -- additive scaling that only ever goes up
+    'j_supernova', 'j_square', 'j_runner', 'j_trousers', 'j_flash', 'j_fortune_teller',
+    'j_hiker',
+    -- economy
+    'j_egg', 'j_delayed_grat', 'j_golden', 'j_cloud_9', 'j_rocket', 'j_to_the_moon',
+    'j_satellite', 'j_gift', 'j_rough_gem',
+    -- quality of life
+    'j_juggler', 'j_drunkard', 'j_chaos', 'j_splash', 'j_astronomer', 'j_burnt',
+}) do BABY_JOKERS[k] = true end
+
+local BABY_TAROTS = {}
+for _, k in ipairs({
+    'c_empress',        -- Mult cards
+    'c_heirophant',     -- Bonus cards; vanilla spells the key this way
+    'c_hermit',         -- double money
+    'c_temperance',     -- money from Jokers
+    'c_high_priestess', -- creates Planets
+    'c_emperor',        -- creates Tarots from this same pool
+}) do BABY_TAROTS[k] = true end
+
+local BABY_VOUCHERS = {}
+for _, k in ipairs({
+    'v_grabber', 'v_nacho_tong', 'v_wasteful', 'v_recyclomancy',
+    'v_overstock_norm', 'v_overstock_plus', 'v_clearance_sale', 'v_liquidation',
+    'v_seed_money', 'v_money_tree', 'v_crystal_ball', 'v_paint_brush', 'v_palette',
+    'v_telescope', 'v_observatory', 'v_planet_merchant', 'v_planet_tycoon',
+    'v_tarot_merchant', 'v_tarot_tycoon', 'v_reroll_surplus', 'v_reroll_glut',
+    'v_blank', 'v_antimatter',
+}) do BABY_VOUCHERS[k] = true end
+
+local ban_nonbaby_jokers  = pool_whitelist('Joker', BABY_JOKERS)
+local ban_nonbaby_tarots  = pool_whitelist('Tarot', BABY_TAROTS)
+local ban_nonbaby_vouchers = pool_whitelist('Voucher', BABY_VOUCHERS)
+-- Enhancements, Editions and Seals are banned into G.GAME.banned_keys at run start
+-- instead of through restrictions.banned_cards: the challenge screen cannot render them.
+local BABY_SAFE = { m_bonus = true, m_mult = true, e_base = true, e_foil = true, e_holo = true }
+
+local ban_spectral_packs = pool_ids('Booster', function(v)
+    return v.kind == 'Spectral' or (v.key or ''):find('spectral')
+end)
+
+local ban_all_tags = pool_ids('Tag')
+
 
 local ban_unlockable_jokers = pool_ids('Joker', function(v)
     if v.rarity == 4 or v.rarity == 'Legendary' then return false end
@@ -771,4 +909,20 @@ challenge('trial', 'The Trial', {
     jokers = { { id = 'j_luchador' } },
     banned_cards = { { id = 'j_chicot' }, { id = 'v_directors_cut' }, { id = 'v_retcon' } },
     banned_tags = { { id = 'tag_boss' } },
+})
+challenge('baby', "Baby's First Balatro", {
+    custom = {
+        { id = 'mcp_baby' },
+        { id = 'mcp_baby_jokers' },
+        { id = 'mcp_baby_bosses' },
+    },
+    modifiers = {
+        { id = 'hands',       value = 5 },   -- vanilla 4
+        { id = 'discards',    value = 4 },   -- vanilla 3
+        { id = 'dollars',     value = 10 },  -- vanilla 4
+        { id = 'joker_slots', value = 5 },
+    },
+    banned_cards = merge_pools(ban_nonbaby_jokers, ban_nonbaby_tarots, ban_nonbaby_vouchers,
+                               ban_spectrals, ban_spectral_packs),
+    banned_tags = ban_all_tags,
 })
