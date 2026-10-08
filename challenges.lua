@@ -97,6 +97,10 @@ local SUITS = { 'S', 'H', 'D', 'C' }
 local RANKS = { '2', '3', '4', '5', '6', '7', '8', '9', 'T', 'J', 'Q', 'K', 'A' }
 local FACES = { 'J', 'Q', 'K' }
 
+-- Read by the run-start ban sweep below, so it has to be declared above it.
+local BABY_SAFE = { m_bonus = true, m_mult = true, m_stone = true,
+                    e_base = true, e_foil = true, e_holo = true }
+
 --============================================================
 -- Hand legality (28 / 36 / 38)
 --============================================================
@@ -492,6 +496,18 @@ local function baby_boss_mult(ante)
     return 2                         -- same size as a normal Boss
 end
 
+-- About a quarter of White Stake. Ante 0 and 1 are pinned to the numbers a first run
+-- should open on; from Ante 2 up it is a flat quarter of vanilla, endless included.
+local BABY_AMOUNTS = { [0] = 25, [1] = 100 }
+
+local mcp_get_blind_amount = get_blind_amount
+function get_blind_amount(ante)
+    if not m('mcp_baby') then return mcp_get_blind_amount(ante) end
+    local plain = MCP.plain(ante)
+    if plain and BABY_AMOUNTS[plain] then return BABY_AMOUNTS[plain] end
+    return mcp_get_blind_amount(ante) * 0.25
+end
+
 local mcp_get_new_boss = get_new_boss
 function get_new_boss()
     if not m('mcp_baby') then return mcp_get_new_boss() end
@@ -696,6 +712,12 @@ for _, k in ipairs({
     'j_satellite', 'j_gift', 'j_rough_gem',
     -- quality of life
     'j_juggler', 'j_drunkard', 'j_chaos', 'j_splash', 'j_astronomer', 'j_burnt',
+    -- scaling that can shrink or spend itself; the text still says exactly what it does
+    'j_ice_cream', 'j_popcorn', 'j_green_joker', 'j_ride_the_bus',
+    'j_mr_bones', 'j_luchador',
+    -- rank-reading Jokers; a fixed rank is still a thing a child can point at
+    'j_scholar', 'j_walkie_talkie', 'j_wee', 'j_shoot_the_moon',
+    'j_even_steven', 'j_odd_todd', 'j_fibonacci', 'j_stuntman',
 }) do BABY_JOKERS[k] = true end
 
 local BABY_TAROTS = {}
@@ -706,6 +728,7 @@ for _, k in ipairs({
     'c_temperance',     -- money from Jokers
     'c_high_priestess', -- creates Planets
     'c_emperor',        -- creates Tarots from this same pool
+    'c_tower',          -- Stone cards
 }) do BABY_TAROTS[k] = true end
 
 local BABY_VOUCHERS = {}
@@ -723,13 +746,15 @@ local ban_nonbaby_tarots  = pool_whitelist('Tarot', BABY_TAROTS)
 local ban_nonbaby_vouchers = pool_whitelist('Voucher', BABY_VOUCHERS)
 -- Enhancements, Editions and Seals are banned into G.GAME.banned_keys at run start
 -- instead of through restrictions.banned_cards: the challenge screen cannot render them.
-local BABY_SAFE = { m_bonus = true, m_mult = true, e_base = true, e_foil = true, e_holo = true }
 
 local ban_spectral_packs = pool_ids('Booster', function(v)
     return v.kind == 'Spectral' or (v.key or ''):find('spectral')
 end)
 
-local ban_all_tags = pool_ids('Tag')
+-- Skipping is prevented rather than removed, so the button still draws. These two are
+-- worth collecting if a Blind is skipped anyway.
+local BABY_TAGS = { tag_investment = true, tag_coupon = true }
+local ban_nonbaby_tags = pool_whitelist('Tag', BABY_TAGS)
 
 
 local ban_unlockable_jokers = pool_ids('Joker', function(v)
@@ -915,6 +940,7 @@ challenge('baby', "Baby's First Balatro", {
         { id = 'mcp_baby' },
         { id = 'mcp_baby_jokers' },
         { id = 'mcp_baby_bosses' },
+        { id = 'mcp_baby_scaling' },
     },
     modifiers = {
         { id = 'hands',       value = 5 },   -- vanilla 4
@@ -924,5 +950,5 @@ challenge('baby', "Baby's First Balatro", {
     },
     banned_cards = merge_pools(ban_nonbaby_jokers, ban_nonbaby_tarots, ban_nonbaby_vouchers,
                                ban_spectrals, ban_spectral_packs),
-    banned_tags = ban_all_tags,
+    banned_tags = ban_nonbaby_tags,
 })

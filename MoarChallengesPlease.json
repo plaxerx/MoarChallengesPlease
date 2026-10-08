@@ -5,6 +5,7 @@
     "description": "30 more vanilla-friendly challenges. GHLF!",
     "prefix": "mcp",
     "main_file": "main.lua",
+    "icon_path": "mcp_icon.png",
     "version": "0.1.0",
     "priority": 5,
     "badge_colour": "3A7BED",
